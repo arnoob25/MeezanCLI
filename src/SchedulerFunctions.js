@@ -1,30 +1,11 @@
-import { approaches, assignedGoals, daysInTheMonth } from "./DataStructures.js";
-import { checkIfAvailableSpotExists } from "./HelperFunctions.js";
+import { approaches, daysInTheMonth } from "./DataStructures.js";
+import {
+    assignOccurrence,
+    calculateInterval,
+    checkIfAvailableSpotExists,
+    findNextAvailableSpot
+} from "./HelperFunctions.js";
 
-
-function assignOccurrence({ goalId, title, spaceId, selectedApproach, preferredTimeWindow, durationOfSingleAttempt }, day) {
-    const alreadyOccurringGoal = assignedGoals.find(g => g.goalId === goalId)
-
-    if (alreadyOccurringGoal) {
-        const goalIndex = assignedGoals.findIndex(g => g.goalId === alreadyOccurringGoal.goalId)
-        assignedGoals[goalIndex] = {
-            ...alreadyOccurringGoal,
-            scheduledDays: [...alreadyOccurringGoal.scheduledDays, day]
-        }
-    }
-
-    else {
-        assignedGoals.push({
-            goalId,
-            title,
-            spaceId,
-            selectedApproach,
-            preferredTimeWindow,
-            durationOfSingleAttempt, // hours
-            scheduledDays: [day],
-        })
-    }
-}
 
 function scheduleUsingTheAsapMethod(maxOccurrences, goal) {
     const { preferredTimeWindow, durationOfSingleAttempt } = goal
@@ -44,39 +25,6 @@ function scheduleUsingTheAsapMethod(maxOccurrences, goal) {
     }
 
     return numberOfScheduledOccurrences
-}
-
-function calculateInterval(maxOccurrences) {
-    return Math.floor(daysInTheMonth.length / maxOccurrences)
-}
-
-function findNextAvailableSpot(currentDay, targetDay, goal) {
-    const { preferredTimeWindow, durationOfSingleAttempt } = goal;
-
-    let forward = currentDay;
-    let backward = currentDay - 1;
-    const isWithinSearchRange = forward <= targetDay || backward >= 0
-
-    while (isWithinSearchRange) {
-        if (forward <= targetDay) {
-            if (checkIfAvailableSpotExists(forward, preferredTimeWindow, durationOfSingleAttempt)) {
-                return forward;
-            }
-            forward++;
-        }
-        // 
-        /* todo: we may want to use a backwards search in the future
-
-        // Note: The backward search will continue until reaching the start (day 0). 
-        // This could be improved by adding more efficient criteria to limit the backward search.
-        if (backward >= 0) {
-            if (checkIfAvailableSpotExists(backward, preferredTimeWindow, durationOfSingleAttempt)) {
-                return backward;
-            }
-            backward--;
-        } */
-    }
-    return null; // No available spot found
 }
 
 function scheduleUsingTheLaidBackMethod(maxOccurrences, goal) {

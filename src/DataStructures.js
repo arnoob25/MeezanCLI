@@ -1,4 +1,3 @@
-import { checkIfAvailableSpotExists } from "./HelperFunctions.js";
 
 export const approaches = {
     asap: 'asap',
@@ -17,26 +16,32 @@ export const periods = {
 export const periodDurations = [
     {
         period: periods.preFajr,
+        order: 1,
         duration: 2 // duration in hours
     },
     {
         period: periods.preDuhr,
+        order: 2,
         duration: 4 // duration in hours
     },
     {
         period: periods.preAsr,
+        order: 3,
         duration: 3 // duration in hours
     },
     {
         period: periods.preMaghrib,
+        order: 4,
         duration: 2 // duration in hours
     },
     {
         period: periods.preIsha,
+        order: 5,
         duration: 1.5 // duration in hours
     },
     {
         period: periods.postIsha,
+        order: 6,
         duration: 5 // duration in hours
     }
 ];
@@ -53,7 +58,7 @@ export const daysInTheMonth = [
     { "day": 1, "weekday": 1, "week": 1 },
     { "day": 2, "weekday": 2, "week": 1 },
     { "day": 3, "weekday": 3, "week": 1 },
-    { "day": 4, "weekday": 4, "week": 1 },
+    /* { "day": 4, "weekday": 4, "week": 1 },
     { "day": 5, "weekday": 5, "week": 1 },
     { "day": 6, "weekday": 6, "week": 1 },
     { "day": 7, "weekday": 7, "week": 1 },
@@ -77,7 +82,7 @@ export const daysInTheMonth = [
     { "day": 25, "weekday": 4, "week": 4 },
     { "day": 26, "weekday": 5, "week": 4 },
     { "day": 27, "weekday": 6, "week": 4 },
-    { "day": 28, "weekday": 7, "week": 4 }
+    { "day": 28, "weekday": 7, "week": 4 } */
 ]
 
 export const assignedGoals = [
@@ -86,7 +91,7 @@ export const assignedGoals = [
         title: 'goal one',
         spaceId: 1,
         preferredTimeWindow: periods.preDuhr,
-        durationOfSingleAttempt: 1, // hours
+        durationOfSingleAttempt: 2, // hours
         selectedApproach: approaches.asap,
         scheduledDays: [1, 2, 3]
     },
@@ -97,6 +102,6 @@ export const assignedGoals = [
         preferredTimeWindow: periods.preDuhr,
         durationOfSingleAttempt: 3, // hours
         selectedApproach: approaches.asap,
-        scheduledDays: [1]
+        scheduledDays: [2]
     },
 ]
