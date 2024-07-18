@@ -15,14 +15,14 @@ let newGoal = {
     title: 'new goal',
     spaceId: 1,
     allowMultipleSameDayOccurrence: false,
-    selectedApproach: approaches.asap,
+    selectedApproach: approaches.laidBack,
     preferredTimeWindow: periods.preDuhr,
     durationOfSingleAttempt: 1, // hours
 }
 
 // calculate  occurrences 
-let expectedNumberOfOccurrences = 10 // Math.min(Math.round(availableTime / newGoal.durationOfSingleAttempt), totalNumberOfAvailableDays)
-console.log('should occur: ', expectedNumberOfOccurrences);
+let maximumPossibleOccurrences = 10 // Math.min(Math.round(availableTime / newGoal.durationOfSingleAttempt), totalNumberOfAvailableDays)
+console.log('should occur: ', maximumPossibleOccurrences);
 
 // track scheduling attempts
 let schedulingAttempt = 1
@@ -32,7 +32,7 @@ let checkedTimeWindows = new Set(); // time windows that were checked for availa
 while (true) {
     // schedule occurrences
     let { unScheduledOccurrences, assignedDays } = assignOccurrencesInAvailableSpots(
-        expectedNumberOfOccurrences, newGoal, scheduledDays);
+        maximumPossibleOccurrences, newGoal, scheduledDays);
     scheduledDays = assignedDays
 
     console.log("attempt", schedulingAttempt, ': unscheduled occurrences: ', unScheduledOccurrences);
@@ -45,7 +45,7 @@ while (true) {
     if (nextTimeWindow === null) break
 
     // updated goal allows scheduling occurrences in other available time windows
-    expectedNumberOfOccurrences = unScheduledOccurrences
+    maximumPossibleOccurrences = unScheduledOccurrences
     checkedTimeWindows.add(nextTimeWindow);
     newGoal = {
         ...newGoal,
