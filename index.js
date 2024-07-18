@@ -4,43 +4,56 @@ import {
     daysInTheMonth,
     periods
 } from "./src/DataStructures.js";
-import { selectNextTimeWindow } from "./src/HelperFunctions.js";
+import { selectNextUnattemptedTimeWindow } from "./src/HelperFunctions.js";
 import { assignOccurrencesInAvailableSpots } from "./src/SchedulerFunctions.js";
 
-
-// initialization
-const totalNumberOfAvailableDays = daysInTheMonth.length
-const availableTime = 10 // monthlyAvailableTime[0].totalAvailableTime
-
 // user inputs
+const numberOfTimeWindows = periods.length;
+
 let newGoal = {
     goalId: assignedGoals.length + 1,
     title: 'new goal',
     spaceId: 1,
+    allowMultipleSameDayOccurrence: false,
     selectedApproach: approaches.asap,
     preferredTimeWindow: periods.preDuhr,
-    durationOfSingleAttempt: 3, // hours
+    durationOfSingleAttempt: 1, // hours
 }
 
 // calculate  occurrences 
-const expectedNumberOfOccurrences = Math.min(Math.round(availableTime / newGoal.durationOfSingleAttempt), totalNumberOfAvailableDays)
-let unScheduledOccurrences = expectedNumberOfOccurrences
+let expectedNumberOfOccurrences = 10 // Math.min(Math.round(availableTime / newGoal.durationOfSingleAttempt), totalNumberOfAvailableDays)
+console.log('should occur: ', expectedNumberOfOccurrences);
+
+// track scheduling attempts
+let schedulingAttempt = 1
+let scheduledDays = []
+let checkedTimeWindows = new Set(); // time windows that were checked for availability
 
 while (true) {
-    unScheduledOccurrences = assignOccurrencesInAvailableSpots(expectedNumberOfOccurrences, newGoal)
+    // schedule occurrences
+    let { unScheduledOccurrences, assignedDays } = assignOccurrencesInAvailableSpots(
+        expectedNumberOfOccurrences, newGoal, scheduledDays);
+    scheduledDays = assignedDays
 
-    // assign the rest of the occurrences in the next time window
-    if (unScheduledOccurrences > 0) {
-        newGoal = {
-            ...newGoal,
-            goalId: newGoal.goalId + 1,
-            preferredTimeWindow: selectNextTimeWindow(newGoal),
-        }
-        continue
-    }
+    console.log("attempt", schedulingAttempt, ': unscheduled occurrences: ', unScheduledOccurrences);
 
-    break
+    let hasSchedulingCompleted = unScheduledOccurrences === 0 || checkedTimeWindows.size >= numberOfTimeWindows
+    if (hasSchedulingCompleted) break;
+
+    // handle scheduling conflicts
+    let nextTimeWindow = selectNextUnattemptedTimeWindow(newGoal, checkedTimeWindows)
+    if (nextTimeWindow === null) break
+
+    // updated goal allows scheduling occurrences in other available time windows
+    expectedNumberOfOccurrences = unScheduledOccurrences
+    checkedTimeWindows.add(nextTimeWindow);
+    newGoal = {
+        ...newGoal,
+        goalId: newGoal.goalId + 1,
+        preferredTimeWindow: nextTimeWindow,
+    };
+
+    schedulingAttempt++
 }
 
-console.log('should occur: ', expectedNumberOfOccurrences);
 console.log(assignedGoals);

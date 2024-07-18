@@ -1,6 +1,5 @@
 import { assignedGoals, periodDurations, daysInTheMonth } from "./DataStructures.js";
 
-
 export function checkIfAvailableSpotExists(day, period, requiredTime) {
     // duration allocated to a specific period
     const allocatedTime = periodDurations.find(item => item.period === period).duration
@@ -48,37 +47,39 @@ export function calculateInterval(maxOccurrences) {
 export function findNextAvailableSpot(currentDay, targetDay, goal) {
     const { preferredTimeWindow, durationOfSingleAttempt } = goal;
 
-    let forward = currentDay;
-    let backward = currentDay - 1;
-    const isWithinSearchRange = forward <= targetDay || backward >= 0
+    const isWithinSearchRange = currentDay < targetDay // todo: incorporate backward search
 
     while (isWithinSearchRange) {
-        if (forward <= targetDay) {
-            if (checkIfAvailableSpotExists(forward, preferredTimeWindow, durationOfSingleAttempt)) {
-                return forward;
-            }
-            forward++;
+        if (checkIfAvailableSpotExists(currentDay, preferredTimeWindow, durationOfSingleAttempt)) {
+            return currentDay;
         }
-        // 
+        currentDay++;
+
         /* todo: we may want to use a backwards search in the future
 
-        // Note: The backward search will continue until reaching the start (day 0). 
+        // Note: The backward search could continue until reaching the start (day 0). 
         // This could be improved by adding more efficient criteria to limit the backward search.
-        if (backward >= 0) {
-            if (checkIfAvailableSpotExists(backward, preferredTimeWindow, durationOfSingleAttempt)) {
-                return backward;
-            }
-            backward--;
-        } */
+        */
     }
     return null; // No available spot found
 }
 
-export function selectNextTimeWindow(goal) {
-    const currentTimeWindow = periodDurations.find(period => period.period === goal.preferredTimeWindow)
+// TODO: check backwards from originally preferred time window after checking the following ones - until we check all the time windows
+function findNextTimeWindow({ preferredTimeWindow }) {
+    const selectedTimeWindowIndex = periodDurations.findIndex(period => period.period === preferredTimeWindow)
+    const nextTimeWindowIndex = Math.min(selectedTimeWindowIndex + 1, periodDurations.length - 1)
 
-    const nextTimeWindowOrder = Math.min(currentTimeWindow.order + 1, periodDurations.length)
-    const nextTimeWindow = periodDurations.find(period => period.order === nextTimeWindowOrder)
-
+    const nextTimeWindow = periodDurations[nextTimeWindowIndex]
     return nextTimeWindow.period
+}
+
+export function selectNextUnattemptedTimeWindow(goal, checkedTimeWindows) {
+    let nextTimeWindow = null;
+    const shouldSelectAnotherTimeWindow = checkedTimeWindows.has(nextTimeWindow)
+
+    do {
+        nextTimeWindow = findNextTimeWindow(goal);
+    } while (shouldSelectAnotherTimeWindow);
+
+    return nextTimeWindow
 }

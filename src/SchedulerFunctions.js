@@ -6,73 +6,88 @@ import {
     findNextAvailableSpot
 } from "./HelperFunctions.js";
 
-
-function scheduleUsingTheAsapMethod(maxOccurrences, goal) {
-    const { preferredTimeWindow, durationOfSingleAttempt } = goal
+function scheduleUsingTheAsapMethod(maxOccurrences, goal, alreadyAssignedDays) {
+    const { preferredTimeWindow, durationOfSingleAttempt, allowMultipleSameDayOccurrence } = goal
 
     const totalDays = daysInTheMonth.length
+    let assignedDays = []
     let numberOfScheduledOccurrences = 0
 
     for (let day = 0; day < totalDays; day++) {
-        let hasScheduledAllOccurrences = numberOfScheduledOccurrences >= maxOccurrences
+        const hasScheduledAllOccurrences = assignedDays.length >= maxOccurrences
         if (hasScheduledAllOccurrences) break
+
+        // prevent or allow multiple occurrences in the same day
+        const isCurrentDayAlreadyAssigned = alreadyAssignedDays.includes(day)
+        if (!allowMultipleSameDayOccurrence && isCurrentDayAlreadyAssigned) continue
 
         const isSpotAvailable = checkIfAvailableSpotExists(day, preferredTimeWindow, durationOfSingleAttempt)
         if (!isSpotAvailable) continue
 
         assignOccurrence(goal, day)
-        numberOfScheduledOccurrences++
+        assignedDays.push(day)
     }
 
-    return numberOfScheduledOccurrences
+    return assignedDays
 }
 
-function scheduleUsingTheLaidBackMethod(maxOccurrences, goal) {
+function scheduleUsingTheLaidBackMethod(maxOccurrences, goal, alreadyAssignedDays) {
+    const { allowMultipleSameDayOccurrence } = goal
+
     const totalDays = daysInTheMonth.length;
-    let numberOfScheduledOccurrences = 0;
+    let assignedDays = []
     let interval = calculateInterval(maxOccurrences);
 
-    for (let day = 0; day < totalDays; day += interval) {
-        let hasScheduledAllOccurrences = numberOfScheduledOccurrences >= maxOccurrences
+    for (let day = 0; day < totalDays; day++) {
+        let hasScheduledAllOccurrences = assignedDays.length >= maxOccurrences
         if (hasScheduledAllOccurrences) break;
 
-        const targetDay = Math.min(day + interval, totalDays - 1);
-        const availableDay = findNextAvailableSpot(day, targetDay, goal);
+        const nextTargetDay = Math.min(day + interval, totalDays - 1);
+        // handle schedule conflict
+        const nextAvailableDayBeforeTarget = findNextAvailableSpot(day, nextTargetDay, goal);
 
-        if (availableDay === null) continue
+        // prevent or allow multiple occurrences in the same day
+        const isCurrentDayAlreadyAssigned = alreadyAssignedDays.includes(day) || assignedDays.includes(day)
+        const shouldAssignOccurrence = (
+            !allowMultipleSameDayOccurrence
+                ? !isCurrentDayAlreadyAssigned && nextAvailableDayBeforeTarget !== null
+                : nextAvailableDayBeforeTarget !== null
+        )
 
-        assignOccurrence(goal, availableDay);
-        numberOfScheduledOccurrences++;
-
-        /* Even if we found an available day earlier or later within the current interval, 
-        we still want the next check to happen at the next intended interval. 
-        This prevents the schedule from potentially becoming too clustered or spread out 
-        due to adjustments made within intervals. */
-        day = targetDay - 1;
+        if (shouldAssignOccurrence) {
+            assignOccurrence(goal, nextAvailableDayBeforeTarget);
+            assignedDays.push(day);
+            /** Note: we don't want to adjust the original spacing (target days)  
+             * because that might make the occurrence too clustered or spread out
+             */
+            day = nextTargetDay;
+            continue;
+        }
     }
 
-    return numberOfScheduledOccurrences;
+    return assignedDays;
 }
 
-export function assignOccurrencesInAvailableSpots(expectedNumberOfOccurrences, goal) {
+export function assignOccurrencesInAvailableSpots(expectedNumberOfOccurrences, goal, alreadyAssignedDays) {
     const { selectedApproach } = goal
-
+    let assignedDays = []
     let unScheduledOccurrences = expectedNumberOfOccurrences
-    let numberOfScheduledOccurrences = 0
 
     switch (selectedApproach) {
         case approaches.asap:
-            numberOfScheduledOccurrences = scheduleUsingTheAsapMethod(expectedNumberOfOccurrences, goal)
+            assignedDays = scheduleUsingTheAsapMethod(expectedNumberOfOccurrences, goal, alreadyAssignedDays)
             break;
 
         case approaches.laidBack:
-            numberOfScheduledOccurrences = scheduleUsingTheLaidBackMethod(expectedNumberOfOccurrences, goal)
+            assignedDays = scheduleUsingTheLaidBackMethod(expectedNumberOfOccurrences, goal, alreadyAssignedDays)
             break;
 
         default:
             break;
     }
 
-
-    return unScheduledOccurrences - numberOfScheduledOccurrences
+    return {
+        assignedDays: [...alreadyAssignedDays, ...assignedDays],
+        unScheduledOccurrences: unScheduledOccurrences - assignedDays.length,
+    }
 }
